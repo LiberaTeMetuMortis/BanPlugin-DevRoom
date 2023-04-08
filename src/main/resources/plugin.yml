@@ -1,0 +1,4 @@
+name: BanPlugin
+version: '${version}'
+main: com.github.liberatemetumortis.banplugin.BanPlugin
+api-version: 1.19
