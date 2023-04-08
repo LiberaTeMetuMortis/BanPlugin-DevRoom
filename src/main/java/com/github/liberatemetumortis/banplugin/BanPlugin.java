@@ -5,8 +5,7 @@ public final class BanPlugin extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        // Plugin startup logic
-
+        new CommandHandlers(this);
     }
 
     @Override
