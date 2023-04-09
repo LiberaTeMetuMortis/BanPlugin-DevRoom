@@ -1,4 +1,14 @@
 name: BanPlugin
 version: '${version}'
 main: com.github.liberatemetumortis.banplugin.BanPlugin
-api-version: 1.19
+commands:
+  ban:
+    description: Ban a player
+    usage: /ban <player> [duration] [reason]
+    aliases: [tempban]
+  unban:
+    description: Unban a player
+    usage: /unban <player>
+  history:
+    description: View a player's ban history
+    usage: /history <player>

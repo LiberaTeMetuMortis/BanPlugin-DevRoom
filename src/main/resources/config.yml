@@ -1,0 +1,63 @@
+# MySQL
+database:
+  host: localhost
+  port: 3306
+  databaseName: test
+  username: root
+  password: root
+
+defaultReason: "Unfair advantage!" # Default ban reason
+notExpired: "Not expired"
+expired: "Expired"
+permanentBanExpireDate: "Never"
+timeZone: "Europe/Istanbul"
+timeFormat: "dd/MM/yyyy HH:mm:ss"
+
+
+usages:
+  ban: "&cUsage: /ban <player> [duration] [reason]"
+  unban: "&cUsage: /unban <player>"
+  history: "&cUsage: /history <player>"
+
+messages:
+  loginDisallowed: "&cYou are not allowed to login because you are banned."
+  playerNotFound: "&cPlayer not found."
+  banBroadcast: "&c{target} has been banned by {issuer} \n&eReason: {reason} \n&eExpire Date: {expireTime}"
+  unbanBroadcast: "&c{target} has been unbanned by {issuer}"
+  youAreBanned: "&cYou are banned by {issuer} \n&eReason {reason} \n&eExpire Date: {expireTime}"
+  playerNotBanned: "&cPlayer is not banned."
+  playerOnlyCommand: "&cOnly players can use this command."
+  noHistory: "&cPlayer has no history."
+
+gui:
+  title: "&cBan History"
+  banItem:
+    material: "RED_WOOL"
+    data: 14
+    name: "&cBan"
+    lore:
+      - "&eIssuer: {issuer}"
+      - "&eReason: {reason}"
+      - "&eIssue Date: {issueTime}"
+      - "&eExpire Date: {expireTime}"
+      - "&eIs expired: {isExpired}"
+  unbanItem:
+    material: "LIME_WOOL"
+    data: 5
+    name: "&aUnban"
+    lore:
+      - "&eIssuer: {issuer}"
+      - "&eIssue Date: {issueTime}"
+  nextPage:
+    material: "ARROW"
+    data: 0
+    name: "&aNext"
+    lore:
+      - "&ePage: {page}"
+  previousPage:
+    material: "ARROW"
+    data: 0
+    name: "&aPrevious"
+    lore:
+      - "&ePage: {page}"
+
