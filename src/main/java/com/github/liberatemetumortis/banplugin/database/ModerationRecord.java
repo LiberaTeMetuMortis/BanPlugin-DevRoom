@@ -13,7 +13,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class ModerationRecord {
