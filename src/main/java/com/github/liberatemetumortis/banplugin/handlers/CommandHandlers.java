@@ -27,7 +27,7 @@ public class CommandHandlers {
         config = plugin.getConfig();
     }
 
-    static class BanCommand implements CommandExecutor {
+    class BanCommand implements CommandExecutor {
         private final BanPlugin plugin;
 
         public BanCommand(BanPlugin plugin) {
@@ -51,27 +51,21 @@ public class CommandHandlers {
                 return true;
             }
 
-            if (args.length == 2) { // Duration specified, no reason
-                Long timeInMillis = Utils.parseTime(args[1]);
-                if (timeInMillis == 0) {
-                    sender.sendMessage(translateColors(config.getString("usages.ban")));
-                    return true;
-                }
-                banPlayer(sender, target, config.getString("defaultReason"), timeInMillis);
-            }
-
-            if (args.length >= 3) { // Duration and reason specified
-                Long timeInMillis = Utils.parseTime(args[1]);
-                if (timeInMillis == 0) {
-                    sender.sendMessage(translateColors(config.getString("usages.ban")));
-                    return true;
-                }
-                StringBuilder reason = new StringBuilder();
+            // We are sure about arguments length is greater than 1
+            StringBuilder reason = new StringBuilder();
+            Long timeInMillis = Utils.parseTime(args[1]);
+            if (timeInMillis == 0L) {
                 for (int i = 2; i < args.length; i++) {
                     reason.append(args[i]).append(" ");
                 }
-                banPlayer(sender, target, reason.toString(), timeInMillis);
+                timeInMillis = -1L;
             }
+            else {
+                for (int i = 2; i < args.length; i++) {
+                    reason.append(args[i]).append(" ");
+                }
+            }
+            banPlayer(sender, target, reason.isEmpty() ? config.getString("defaultReason") : reason.toString(), timeInMillis);
             return true;
         }
 
@@ -101,7 +95,7 @@ public class CommandHandlers {
                         true
                 );
             }
-            moderationRecord.insertRecord(BanPlugin.db);
+            moderationRecord.insertRecord(plugin);
             plugin.getLogger().info("Player named " + target.getName() + " was banned by " + issuer.getName() + " for " + reason + " for " + duration + " milliseconds");
             Bukkit.broadcastMessage(translateColors(
                     moderationRecord.replacePlaceholders(config.getString("messages.banBroadcast"))
@@ -112,7 +106,7 @@ public class CommandHandlers {
         }
     }
 
-    static class UnbanCommand implements CommandExecutor {
+    class UnbanCommand implements CommandExecutor {
         private final BanPlugin plugin;
 
         public UnbanCommand(BanPlugin plugin) {
@@ -160,7 +154,7 @@ public class CommandHandlers {
                         false
                 );
             }
-            moderationRecord.insertRecord(BanPlugin.db);
+            moderationRecord.insertRecord(plugin);
             plugin.getLogger().info("Player named " + target.getName() + " was unbanned by " + issuer.getName());
             Bukkit.broadcastMessage(translateColors(
                     moderationRecord.replacePlaceholders(config.getString("messages.unbanBroadcast"))
@@ -168,7 +162,7 @@ public class CommandHandlers {
         }
     }
 
-    static class HistoryCommand implements CommandExecutor {
+    class HistoryCommand implements CommandExecutor {
         private final BanPlugin plugin;
 
         public HistoryCommand(BanPlugin plugin) {
