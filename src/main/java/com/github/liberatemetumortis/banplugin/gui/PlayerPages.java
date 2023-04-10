@@ -10,7 +10,6 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 
 public class PlayerPages {
     ArrayList<Page> pages = new ArrayList<>();
@@ -18,7 +17,7 @@ public class PlayerPages {
     private final Player senderPlayer;
     public PlayerPages(Player senderPlayer, ArrayList<ModerationRecord> records) {
         this.senderPlayer = senderPlayer;
-        FileConfiguration config = BanPlugin.instance.getConfig();
+        FileConfiguration config = BanPlugin.getInstance().getConfig();
         ArrayList<ModerationRecord> reverseRecords = Utils.reverseModerationRecordList(records);
         for(int i = 0; i < reverseRecords.size(); i += 28) {
             pages.add(new Page(reverseRecords.subList(i, Math.min(i + 28, reverseRecords.size())).stream().map(ModerationRecord::getGUIItem).toList(), this));
