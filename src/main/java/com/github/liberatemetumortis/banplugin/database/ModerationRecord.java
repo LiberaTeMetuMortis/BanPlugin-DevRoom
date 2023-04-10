@@ -7,6 +7,7 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -23,14 +24,13 @@ public class ModerationRecord {
     }
     public static boolean isBanned(OfflinePlayer player) {
         ArrayList<ModerationRecord> records = getRecords(player);
-        if(records.size() == 0) return false;
+        if(records.isEmpty()) return false;
         ModerationRecord lastRecord = records.get(records.size() - 1);
         if(!lastRecord.isBan) return false;
         return lastRecord.getTimeExpires() == -1 || lastRecord.getTimeExpires() > System.currentTimeMillis();
     }
     public static void fetchBanRecords(Database db) {
-        try {
-            ResultSet rs = db.getConnection().createStatement().executeQuery("SELECT * FROM moderations");
+        try(ResultSet rs = db.getConnection().createStatement().executeQuery("SELECT * FROM moderations");) {
             while (rs.next()) {
                 new ModerationRecord(
                         rs.getString("issuerID"),
@@ -81,29 +81,34 @@ public class ModerationRecord {
         moderationRecords.add(this);
     }
 
-    public void insertRecord(Database db)  {
+    public void insertRecord(BanPlugin plugin)  {
         // We don't want to get SQL injected
-        try {
-            PreparedStatement statement = db.getConnection().prepareStatement("INSERT INTO moderations (issuerID, issuerName, targetID, targetName, reason, timeIssued, timeExpires, isBan) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-            statement.setString(1, issuerID);
-            statement.setString(2, issuerName);
-            statement.setString(3, targetID);
-            statement.setString(4, targetName);
-            statement.setString(5, reason);
-            statement.setLong(6, timeIssued);
-            statement.setObject(7, timeExpires); // It must be object because it throws NullPointerException if it's null (when I use long)
-            statement.setBoolean(8, isBan);
-            statement.executeUpdate();
-            ResultSet idQuery = db.getConnection().createStatement().executeQuery("SELECT COUNT(*) as cnt FROM moderations;");
-            idQuery.next();
-            this.id = idQuery.getInt("cnt");
-        }catch (SQLException e) {
-            e.printStackTrace();
-        }
+        new BukkitRunnable(){
+            Database db = plugin.getDb();
+            @Override
+            public void run() {
+                try(PreparedStatement statement = db.getConnection().prepareStatement("INSERT INTO moderations (issuerID, issuerName, targetID, targetName, reason, timeIssued, timeExpires, isBan) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");) {
+                    statement.setString(1, issuerID);
+                    statement.setString(2, issuerName);
+                    statement.setString(3, targetID);
+                    statement.setString(4, targetName);
+                    statement.setString(5, reason);
+                    statement.setLong(6, timeIssued);
+                    statement.setObject(7, timeExpires); // It must be object because it throws NullPointerException if it's null (when I use long)
+                    statement.setBoolean(8, isBan);
+                    statement.executeUpdate();
+                    ResultSet idQuery = db.getConnection().createStatement().executeQuery("SELECT COUNT(*) as cnt FROM moderations;");
+                    idQuery.next();
+                    id = idQuery.getInt("cnt");
+                }catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        }.runTaskAsynchronously(plugin);
     }
 
     public ItemStack getGUIItem() {
-        FileConfiguration config = BanPlugin.instance.getConfig();
+        FileConfiguration config = BanPlugin.getInstance().getConfig();
         ItemStack item = new ItemStack(Material.getMaterial(config.getString(this.isBan ? "gui.banItem.material" : "gui.unbanItem.material")));
         item.setAmount(1);
         item.setDurability((short) config.getInt(this.isBan ? "gui.banItem.data" : "gui.unbanItem.data", 0));
@@ -119,21 +124,45 @@ public class ModerationRecord {
         return item;
     }
 
-    static private class variables {
-        private static FileConfiguration config = BanPlugin.instance.getConfig();
+    static private class Variables {
+        private static FileConfiguration config = BanPlugin.getInstance().getConfig();
+        public static final Supplier<String> getPermanentBanExpireDate = () -> config.getString("permanentBanExpireDate");
         public static final Supplier<String> getTimeZone = () -> config.getString("timeZone");
         public static final Supplier<String> getTimeFormat = () -> config.getString("timeFormat");
-        public static final Supplier<String> getPermanentBanExpireDate = () -> config.getString("permanentBanExpireDate");
-        public static final Supplier<String> notExpired = () -> config.getString("notExpired");
-        public static final Supplier<String> expired = () -> config.getString("expired");
+        public static final Supplier<String> getNotExpired = () -> config.getString("notExpired");
+        public static final Supplier<String> getExpired = () -> config.getString("expired");
     }
     public String replacePlaceholders(String string) {
+        String expireTime;
+        if (this.timeExpires != null) { // Check if it's a ban
+            if (this.timeExpires == -1) { // Check if it's a permanent ban
+                expireTime = Variables.getPermanentBanExpireDate.get();
+            } else {
+                expireTime = Utils.formatTimeWithDelay(Variables.getTimeZone.get(), Variables.getTimeFormat.get(), this.timeExpires-System.currentTimeMillis());
+            }
+        } else {
+            expireTime = "";
+        }
+
+        String isExpired;
+        if (this.timeExpires != null) { // Check if it's a ban
+            if (this.timeExpires == -1) { // Check if it's a permanent ban
+                isExpired = Variables.getNotExpired.get();
+            } else if (this.timeExpires < System.currentTimeMillis()) { // Check if it's expired
+                isExpired = Variables.getExpired.get();
+            } else {
+                isExpired = Variables.getExpired.get();
+            }
+        } else {
+            isExpired = "";
+        }
+
         return string
                 .replace("{issuer}", this.issuerName)
                 .replace("{target}", this.targetName)
                 .replace("{reason}", this.reason != null ? this.reason : "")
-                .replace("{issueTime}", Utils.formatTime(variables.getTimeZone.get(), variables.getTimeFormat.get(), this.timeIssued))
-                .replace("{expireTime}", this.timeExpires != null ? this.timeExpires == -1 ? variables.getPermanentBanExpireDate.get() : Utils.formatTimeWithDelay(variables.getTimeZone.get(), variables.getTimeFormat.get(), this.timeExpires-System.currentTimeMillis()) : "")
-                .replace("{isExpired}", this.timeExpires != null ? this.timeExpires == -1 ? variables.notExpired.get() : this.timeExpires < System.currentTimeMillis() ? variables.expired.get() : variables.notExpired.get() : "");
+                .replace("{issueTime}", Utils.formatTime(Variables.getTimeZone.get(), Variables.getTimeFormat.get(), this.timeIssued))
+                .replace("{expireTime}", expireTime)
+                .replace("{isExpired}", isExpired);
     }
 }
