@@ -41,7 +41,7 @@ public class Page implements InventoryHolder {
             this.items[i] = items.get(i);
         }
 
-        inventory = Bukkit.createInventory(this, 54, Utils.translateColors(BanPlugin.instance.getConfig().getString("gui.title")));
+        inventory = Bukkit.createInventory(this, 54, Utils.translateColors(BanPlugin.getInstance().getConfig().getString("gui.title")));
         for (int i = 0; i < this.items.length; i++) {
             inventory.setItem(usableSlots[i], this.items[i]);
         }
