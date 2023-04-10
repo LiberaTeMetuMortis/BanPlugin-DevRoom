@@ -16,10 +16,9 @@ import java.util.ArrayList;
 import java.util.function.Supplier;
 
 public class ModerationRecord {
-    private static ArrayList<ModerationRecord> moderationRecords = new ArrayList<>();
+    private static final ArrayList<ModerationRecord> moderationRecords = new ArrayList<>();
     public static ArrayList<ModerationRecord> getRecords(OfflinePlayer player) {
-        ArrayList<ModerationRecord> list = new ArrayList<>(moderationRecords.stream().filter(moderationRecord -> moderationRecord.getTargetID().equals(player.getUniqueId().toString())).toList());
-        return list;
+        return new ArrayList<>(moderationRecords.stream().filter(moderationRecord -> moderationRecord.getTargetID().equals(player.getUniqueId().toString())).toList());
     }
     public static boolean isBanned(OfflinePlayer player) {
         ArrayList<ModerationRecord> records = getRecords(player);
@@ -29,7 +28,7 @@ public class ModerationRecord {
         return lastRecord.getTimeExpires() == -1 || lastRecord.getTimeExpires() > System.currentTimeMillis();
     }
     public static void fetchBanRecords(Database db) {
-        try(ResultSet rs = db.getConnection().createStatement().executeQuery("SELECT * FROM moderations");) {
+        try(ResultSet rs = db.getConnection().createStatement().executeQuery("SELECT * FROM moderations")) {
             while (rs.next()) {
                 new ModerationRecord(
                         rs.getString("issuerID"),
@@ -83,10 +82,10 @@ public class ModerationRecord {
     public void insertRecord(BanPlugin plugin)  {
         // We don't want to get SQL injected
         new BukkitRunnable(){
-            Database db = plugin.getDb();
+            private final Database db = plugin.getDb();
             @Override
             public void run() {
-                try(PreparedStatement statement = db.getConnection().prepareStatement("INSERT INTO moderations (issuerID, issuerName, targetID, targetName, reason, timeIssued, timeExpires, isBan) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");) {
+                try(PreparedStatement statement = db.getConnection().prepareStatement("INSERT INTO moderations (issuerID, issuerName, targetID, targetName, reason, timeIssued, timeExpires, isBan) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")) {
                     statement.setString(1, issuerID);
                     statement.setString(2, issuerName);
                     statement.setString(3, targetID);
@@ -124,7 +123,7 @@ public class ModerationRecord {
     }
 
     static private class Variables {
-        private static FileConfiguration config = BanPlugin.getInstance().getConfig();
+        private static final FileConfiguration config = BanPlugin.getInstance().getConfig();
         public static final Supplier<String> getPermanentBanExpireDate = () -> config.getString("permanentBanExpireDate");
         public static final Supplier<String> getTimeZone = () -> config.getString("timeZone");
         public static final Supplier<String> getTimeFormat = () -> config.getString("timeFormat");
