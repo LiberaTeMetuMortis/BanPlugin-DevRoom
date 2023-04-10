@@ -53,11 +53,11 @@ gui:
     data: 0
     name: "&aNext"
     lore:
-      - "&ePage: {page}"
+      - "&f"
   previousPage:
     material: "ARROW"
     data: 0
     name: "&aPrevious"
     lore:
-      - "&ePage: {page}"
+      - "&f"
 
