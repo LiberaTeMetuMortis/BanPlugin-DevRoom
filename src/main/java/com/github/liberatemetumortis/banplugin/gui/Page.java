@@ -52,7 +52,7 @@ public class Page implements InventoryHolder {
 
 
     }
-    ItemStack[] items = new ItemStack[28];
+    private ItemStack[] items = new ItemStack[28];
 
     private Inventory inventory;
 
