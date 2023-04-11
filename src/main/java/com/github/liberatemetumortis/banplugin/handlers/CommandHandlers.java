@@ -55,7 +55,7 @@ public class CommandHandlers {
             StringBuilder reason = new StringBuilder();
             Long timeInMillis = Utils.parseTime(args[1]);
             if (timeInMillis == 0L) {
-                for (int i = 2; i < args.length; i++) {
+                for (int i = 1; i < args.length; i++) {
                     reason.append(args[i]).append(" ");
                 }
                 timeInMillis = -1L;
